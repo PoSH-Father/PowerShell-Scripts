@@ -1,23 +1,22 @@
 ###
-#This script is used to enumerate SMB shares in an AD enterprise environment and also parses accessible files for keywords
-#Adjust certain parameters like $extensions or $pattern variables to change targets
-#Leverages mulitple .NET modules for efficiency
+# This script is used to enumerate SMB shares in an AD enterprise environment and also parses accessible files for keywords
+# Adjust certain parameters like $extensions or $pattern variables to change targets
+# Leverages mulitple .NET modules for efficiency
 ###
 
-
-#Loads the System.Windows.Forms assembly (used to navigate to file via File Explorer)
+# Loads the System.Windows.Forms assembly (used to navigate to file via File Explorer)
 Add-Type -AssemblyName System.Windows.Forms
 $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog -Property @{ InitialDirectory = [Environment]::GetFolderPath('Desktop') }
 $null = $FileBrowser.ShowDialog()
 
 
-#Populates this variable with selected file through File Explorer (File must be a .txt)
+# Populates this variable with selected file through File Explorer (File must be a .txt)
 $servers = Get-Content -Path $FileBrowser.FileName
 
-#Request Output file name (Name must inlcude .csv extension)
+# Request Output file name (Name must inlcude .csv extension)
 $Output= Read-Host -Prompt "Enter Output file name and include .csv extension (Example_File.csv)"
 
-#Progress Bar Variables
+# Progress Bar Variables
 $TotalItems = $servers.count
 $CurrentItem = 0
 $PercentComplete = 0
@@ -60,7 +59,7 @@ $Computers445Open = foreach($server in $servers) {
     }
 }
 
-#Progress Bar Reset
+# Progress Bar Reset
 $TotalItems = $Computers445Open.SERVER.count
 $CurrentItem = 0
 $PercentComplete = 0
@@ -87,7 +86,7 @@ $Computer_Shares = foreach($server in $Computers445Open.SERVER) {
     }
 }
 
-#Progress Bar Reset
+# Progress Bar Reset
 $TotalItems = $Computer_Shares.SHARE_NAME.count
 $CurrentItem = 0
 $PercentComplete = 0
@@ -96,6 +95,7 @@ $PercentComplete = 0
 # Enumerate ACLs for SMB shares
 # ----------------------------------------------------------------------
 
+# These variables are just for reference
 $IDReferences = @('MBULOGIN\Domain Users', 'Everyone', 'BUILTIN\Users', 'NT AUTHORITY\Authenticated Users', 
 'NT AUTHORITY\ANONYMOUS LOGON', 'MBULOGIN\Domain Computers')
 $FileSystemRights = @('FullControl' , 'ReadAndExecute, Synchronize', 'Modify, Synchronize', '-1610612736', 'AppendData', 
@@ -114,8 +114,6 @@ $Share_ACLs = foreach ($share in $Computer_Shares) {
         $Acl = Get-Acl -Path "\\$($share.SERVER)\$($share.SHARE_NAME)" -ErrorAction Stop
         Write-Host "found ACL for" $Share.SHARE_NAME "on" $share.SERVER
         $Has_Access = $true
-        #$Share_File_Count = Get-ChildItem "\\$($share.SERVER)\$($share.SHARE_NAME)" -Recurse -File | Measure-Object | Select-Object -ExpandProperty Count -ErrorAction Stop
-        #Write-Host $Share.SHARE_NAME "has $Share_File_Count files on" $server.SERVER
     }
 
     Catch { 
@@ -127,11 +125,11 @@ $Share_ACLs = foreach ($share in $Computer_Shares) {
          
         foreach($accessRule in $Acl.Access) { 
             [PSCustomObject]@{
-                SERVER           = $share.SERVER
-                SHARE_NAME       = $share.SHARE_NAME
-                Account          = $accessRule.IdentityReference
-                Permission       = $accessRule.FileSystemRights
-                HashCode         = $accessRule.GetHashCode()
+                SERVER     = $share.SERVER
+                SHARE_NAME = $share.SHARE_NAME
+                Account    = $accessRule.IdentityReference
+                Permission = $accessRule.FileSystemRights
+                HashCode   = $accessRule.GetHashCode()
             }
         }
     }
@@ -144,13 +142,13 @@ $Share_ACLs = foreach ($share in $Computer_Shares) {
 $NTAuthACLs = foreach ($ACL in $share_ACLS) {
     if($ACL.Account -eq 'NT AUTHORITY\SYSTEM') {
         [PSCustomObject]@{
-            SERVER           = $ACL.SERVER
-            SHARE_NAME       = $ACL.SHARE_NAME
+            SERVER     = $ACL.SERVER
+            SHARE_NAME = $ACL.SHARE_NAME
         }
     }
 }
 
-#Progress Bar Reset
+# Progress Bar Reset
 $TotalItems = $NTAuthACLs.count
 $CurrentItem = 0
 $PercentComplete = 0
@@ -180,10 +178,10 @@ $MetaData = foreach ($ACL in $NTAuthACLs) {
 
     if($File_Count) {
         [PSCustomObject]@{
-            SERVER           = $ACL.SERVER
-            SHARE_NAME       = $ACL.SHARE_NAME
-            File_Count       = $Share_Metadata | Measure-Object | Select-Object -ExpandProperty Count
-            Files            = $Share_Metadata.FullName
+            SERVER     = $ACL.SERVER
+            SHARE_NAME = $ACL.SHARE_NAME
+            File_Count = $Share_Metadata | Measure-Object | Select-Object -ExpandProperty Count
+            Files      = $Share_Metadata.FullName
         }
     }
 }
@@ -196,12 +194,14 @@ $PercentComplete = 0
 # Parse All accessible files
 # ----------------------------------------------------------------------
 
+# Add or remove extension that you want to be checked
 $extensions = @(".ps1", ".py", ".ini", ".conf", ".yaml", ".sh", ".txt")
 
 $TotalItems=$Metadata.Files.count
 $CurrentItem = 0
 $PercentComplete = 0
 
+# Add or remove patterns that you want to be checked
 $Patterns = "password =", "password=", "username=","username =", "apikey", "api_key", "PRIVATE KEY"
 
 $File_Parse = foreach ($file in $Metadata.Files){
@@ -218,10 +218,10 @@ $File_Parse = foreach ($file in $Metadata.Files){
             Write-Host "Sensitive Information found"
             foreach ($hit in $Data_in_File){
                 [PSCustomObject] @{
-                    FILEPATH              = $File
-                    Regex_Match           = $hit.Matches.Value
-                    SERVER                = ($file.split("\"))[2]
-                    SHARE_NAME            = ($file.split("\"))[3]
+                    FILEPATH    = $File
+                    Regex_Match = $hit.Matches.Value
+                    SERVER      = ($file.split("\"))[2]
+                    SHARE_NAME  = ($file.split("\"))[3]
                 }
             }
         }
@@ -232,6 +232,7 @@ $File_Parse = foreach ($file in $Metadata.Files){
 # ----------------------------------------------------------------------
 # Output
 # ----------------------------------------------------------------------
+
 $Share_ACLs_Output = 'Share_ACLs_' + $Output
 $Share_ACLs | Export-Csv -Path C:\users\$env:USERNAME\Desktop\$Share_ACLs_Output
 
