@@ -97,7 +97,7 @@ $PercentComplete = 0
 
 # These variables are just for reference
 $IDReferences = @('MBULOGIN\Domain Users', 'Everyone', 'BUILTIN\Users', 'NT AUTHORITY\Authenticated Users', 
-'NT AUTHORITY\ANONYMOUS LOGON', 'MBULOGIN\Domain Computers')
+'NT AUTHORITY\ANONYMOUS LOGON', 'DOMAINNAME\Domain Computers')
 $FileSystemRights = @('FullControl' , 'ReadAndExecute, Synchronize', 'Modify, Synchronize', '-1610612736', 'AppendData', 
 'CreateFiles', '268435456', 'Read, Synchronize', 'Write, ReadAndExecute, Synchronize', 'CreateFiles, Synchronize', 
 'AppendData, Synchronize', '1610809791', 'Write', '-536805376', 'DeleteSubdirectoriesAndFiles, Modify, Synchronize', 
