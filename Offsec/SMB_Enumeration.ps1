@@ -96,7 +96,7 @@ $PercentComplete = 0
 # ----------------------------------------------------------------------
 
 # These variables are just for reference
-$IDReferences = @('MBULOGIN\Domain Users', 'Everyone', 'BUILTIN\Users', 'NT AUTHORITY\Authenticated Users', 
+$IDReferences = @('DOMAINNAME\Domain Users', 'Everyone', 'BUILTIN\Users', 'NT AUTHORITY\Authenticated Users', 
 'NT AUTHORITY\ANONYMOUS LOGON', 'DOMAINNAME\Domain Computers')
 $FileSystemRights = @('FullControl' , 'ReadAndExecute, Synchronize', 'Modify, Synchronize', '-1610612736', 'AppendData', 
 'CreateFiles', '268435456', 'Read, Synchronize', 'Write, ReadAndExecute, Synchronize', 'CreateFiles, Synchronize', 
@@ -202,7 +202,7 @@ $CurrentItem = 0
 $PercentComplete = 0
 
 # Add or remove patterns that you want to be checked
-$Patterns = "password =", "password=", "username=","username =", "apikey", "api_key", "PRIVATE KEY"
+$Patterns = "PLACEHOLDER"
 
 $File_Parse = foreach ($file in $Metadata.Files){
 
